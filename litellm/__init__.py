@@ -286,6 +286,10 @@ add_function_to_prompt: bool = (
 )
 client_session: Optional[httpx.Client] = None
 aclient_session: Optional[httpx.AsyncClient] = None
+
+client_session_factory: Optional[Callable[[], httpx.Client]] = None
+aclient_session_factory: Optional[Callable[[], httpx.AsyncClient]] = None
+
 model_fallbacks: Optional[List] = None  # Deprecated for 'litellm.fallbacks'
 model_cost_map_url: str = (
     "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"
