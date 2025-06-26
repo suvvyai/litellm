@@ -119,6 +119,9 @@ class AsyncHTTPHandler:
         event_hooks: Optional[Mapping[str, List[Callable[..., Any]]]],
         ssl_verify: Optional[VerifyTypes] = None,
     ) -> httpx.AsyncClient:
+        if litellm.aclient_session_factory is not None:
+            return litellm.aclient_session_factory()
+
         # SSL certificates (a.k.a CA bundle) used to verify the identity of requested hosts.
         # /path/to/certificate.pem
         if ssl_verify is None:
@@ -639,20 +642,23 @@ class HTTPHandler:
         cert = os.getenv("SSL_CERTIFICATE", litellm.ssl_certificate)
 
         if client is None:
-            transport = self._create_sync_transport()
+            if litellm.client_session_factory is not None:
+                self.client = litellm.client_session_factory()
+            else:
+                transport = self._create_sync_transport()
 
-            # Create a client with a connection pool
-            self.client = httpx.Client(
-                transport=transport,
-                timeout=timeout,
-                limits=httpx.Limits(
-                    max_connections=concurrent_limit,
-                    max_keepalive_connections=concurrent_limit,
-                ),
-                verify=ssl_verify,
-                cert=cert,
-                headers=headers,
-            )
+                # Create a client with a connection pool
+                self.client = httpx.Client(
+                    transport=transport,
+                    timeout=timeout,
+                    limits=httpx.Limits(
+                        max_connections=concurrent_limit,
+                        max_keepalive_connections=concurrent_limit,
+                    ),
+                    verify=ssl_verify,
+                    cert=cert,
+                    headers=headers,
+                )
         else:
             self.client = client
 
